@@ -40,6 +40,10 @@ module InPlaceMacrosHelper
   #                                   in the AJAX call, +form+ is an implicit parameter
   # <tt>:script</tt>::                Instructs the in-place editor to evaluate the remote JavaScript response (default: false)
   # <tt>:click_to_edit_text</tt>::    The text shown during mouseover the editable text (default: "Click to edit")
+  # <tt>:failure</tt>::               Javascript callback on failure (500).
+  # <tt>:complete</tt>::              Javascript callback fires when the request is complete.
+  # <tt>:enter_editing</tt>::         Javascript callback fires when beginning to edit.
+  # <tt>:exit_editing</tt>::          Javascript callback fires when ending the edit.
   def in_place_editor(field_id, options = {})
     function =  "document.observe('dom:loaded', function(e){"
     function << "new Ajax.InPlaceEditor("
@@ -72,6 +76,10 @@ module InPlaceMacrosHelper
     js_options['textBetweenControls'] = %('#{options[:text_between_controls]}') if options[:text_between_controls]
     js_options['highlightcolor'] = %('#{options[:highlight_color]}') if options[:highlight_color]
     js_options['highlightendcolor'] = %('#{options[:highlight_end_color]}') if options[:highlight_end_color]
+    js_options['onFailure'] = "function(element, transport) { #{options[:failure]} }" if options[:failure]
+    js_options['onComplete'] = "function(transport, element) { #{options[:complete]} }" if options[:complete]
+    js_options['onEnterEditMode'] = "function(element) { #{options[:enter_editing]} }" if options[:enter_editing]
+    js_options['onLeaveEditMode'] = "function(element) { #{options[:exit_editing]} }" if options[:exit_editing]
     function << (', ' + options_for_javascript(js_options)) unless js_options.empty?
 
     function << ')'
