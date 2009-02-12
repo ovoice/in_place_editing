@@ -70,7 +70,7 @@ module InPlaceMacrosHelper
     js_options['externalControlOnly'] = "true" if options[:external_control_only]
     js_options['submitOnBlur'] = "'#{options[:submit_on_blur]}'" if options[:submit_on_blur]
     js_options['loadTextURL'] = "'#{url_for(options[:load_text_url])}'" if options[:load_text_url]
-    js_options['ajaxOptions'] = options[:options].to_json if options[:options]
+    js_options['ajaxOptions'] = options[:options].send(options[:options].is_a?(String) ? :to_s : :to_json) if options[:options]
     js_options['htmlResponse'] = !options[:script] if options[:script]
     js_options['callback']   = "function(form, value) { return #{options[:with]} }" if options[:with]
     js_options['clickToEditText'] = %('#{options[:click_to_edit_text]}') if options[:click_to_edit_text]
