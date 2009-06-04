@@ -45,7 +45,8 @@ module InPlaceMacrosHelper
   # <tt>:enter_editing</tt>::         Javascript callback fires when beginning to edit.
   # <tt>:exit_editing</tt>::          Javascript callback fires when ending the edit.
   def in_place_editor(field_id, options = {})
-    function =  "document.observe('dom:loaded', function(e){"
+    function =  ""
+    function << "document.observe('dom:loaded', function(e){" unless controller.request.xhr?
     function << "new Ajax.InPlaceEditor("
     function << "'#{field_id}', "
     function << "'#{url_for(options[:url])}'"
@@ -84,7 +85,7 @@ module InPlaceMacrosHelper
     function << (', ' + options_for_javascript(js_options)) unless js_options.empty?
 
     function << ')'
-    function << '})'
+    function << '})' unless controller.request.xhr?
 
     javascript_tag(function)
   end
