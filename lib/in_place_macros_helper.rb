@@ -99,5 +99,61 @@ module InPlaceMacrosHelper
     tag.to_content_tag(tag_options.delete(:tag), tag_options) +
     in_place_editor(tag_options[:id], in_place_editor_options)
   end
+  
+   #CHANGE: The following two methods were added to allow in place editing with a select field instead of a text field.
+  # For more info visit: http://www.thetacom.info/2008/03/21/rails-in-place-editing-plugin-w-selection/
+  # Scriptaculous Usage: new Ajax.InPlaceCollectionEditor( element, url, { collection: [array], [moreOptions] } );
+  def in_place_collection_editor(field_id, options = {})
+    
+    def text(key, options)
+      options_value = options["#{key}_text".to_sym]
+      locale_value = I18n.translate("in_place_editing.text.#{key}", :locale => options[:locale]) if !options_value
+      value = options_value || (locale_value if !locale_value.start_with? "translation missing: ")
+      "'#{value}'" if value
+    end
+    
+    function = "new Ajax.InPlaceCollectionEditor("
+    function << "'#{field_id}', "
+    function << "'#{url_for(options[:url])}'"
+ 
+    #CHANGED: Added to allow plugin to work with Rails 2 session forgery protection
+    if protect_against_forgery?
+      options[:with] ||= "Form.serialize(form)"
+      options[:with] += " + '&authenticity_token=' + encodeURIComponent('#{form_authenticity_token}')"
+    end
+    #end CHANGE
+ 
+    js_options = {}
+    js_options['collection'] = %(#{options[:collection]})
+    js_options['cancelText'] = text(:cancel, options) if text(:cancel, options)
+    js_options['okText'] = text(:save, options) if text(:save, options)
+    js_options['loadingText'] = text(:loading, options) if text(:loading, options)
+    js_options['savingText'] = text(:saving, options) if text(:saving, options)
+    js_options['rows'] = options[:rows] if options[:rows]
+    js_options['cols'] = options[:cols] if options[:cols]
+    js_options['size'] = options[:size] if options[:size]
+    js_options['externalControl'] = "'#{options[:external_control]}'" if options[:external_control]
+    js_options['loadTextURL'] = "'#{url_for(options[:load_text_url])}'" if options[:load_text_url]
+    js_options['ajaxOptions'] = options[:options] if options[:options]
+    #CHANGED: To bring in line with current scriptaculous usage
+    js_options['htmlResponse'] = !options[:script] if options[:script]
+    js_options['callback'] = "function(form) { return #{options[:with]} }" if options[:with]
+    js_options['clickToEditText'] = text(:click_to_edit, options) if text(:click_to_edit, options)
+    js_options['textBetweenControls'] = %('#{options[:text_between_controls]}') if options[:text_between_controls]
+    function << (', ' + options_for_javascript(js_options)) unless js_options.empty?
+ 
+    function << ')'
+ 
+    javascript_tag(function)
+  end
+ 
+  # Renders the value of the specified object and method with in-place select capabilities.
+  def in_place_editor_select_field(object, method, tag_options = {}, in_place_editor_options = {})
+    tag = ::ActionView::Helpers::InstanceTag.new(object, method, self)
+    tag_options = {:tag => "span", :id => "#{object}_#{method}_#{tag.object.id}_in_place_editor", :class => "in_place_editor_field"}.merge!(tag_options)
+    in_place_editor_options[:url] = in_place_editor_options[:url] || url_for({ :action => "set_#{object}_#{method}", :id => tag.object.id })
+    tag.to_content_tag(tag_options.delete(:tag), tag_options) +
+    in_place_collection_editor(tag_options[:id], in_place_editor_options)
+  end
 
 end
